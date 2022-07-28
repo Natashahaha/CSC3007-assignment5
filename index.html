@@ -1,0 +1,94 @@
+<html>
+
+<head>
+    <title>Assignment 5</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.css" />
+
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.js"></script>
+</head>
+
+<body>
+    <h1>Assignment 5</h1>
+    <div id='mapdiv' style='height:800px;'></div>
+</body>
+<script>
+    var center = L.bounds([1.56073, 104.11475], [1.16, 103.502]).getCenter();
+    var map = L.map('mapdiv').setView([center.x, center.y], 12);
+
+    var basemap = L.tileLayer('https://maps-{s}.onemap.sg/v3/Grey/{z}/{x}/{y}.png', {
+        detectRetina: true,
+        maxZoom: 18,
+        minZoom: 11
+    });
+
+    map.setMaxBounds([[1.56073, 104.1147], [1.16, 103.502]]);
+
+    basemap.addTo(map);
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        }
+    }
+
+    function showPosition(position) {
+        marker = new L.Marker([position.coords.latitude, position.coords.longitude], { bounceOnAdd: false }).addTo(map);
+        var popup = L.popup()
+            .setLatLng([position.coords.latitude, position.coords.longitude])
+            .setContent('You are here!')
+            .openOn(map);
+    }
+    fetch('https://api.data.gov.sg/v1/environment/psi')
+        .then(response => response.json())
+        .then(function (data) {
+            var regionData = data.region_metadata;
+
+            var psiIndex = data.items[0].readings.psi_twenty_four_hourly;
+
+            for (i = 0; i < regionData.length; i++) {
+                let location = regionData[i].name;
+
+                if (psiIndex[location] <= 50) {
+                    color = "#47FB00";
+                } else if (psiIndex[location] <= 100) {
+                    color = "#F8F900";
+                } else if (psiIndex[location] <= 200) {
+                    color = "#FFCE03";
+                } else if (psiIndex[location] <= 300) {
+                    color = "#ED910D";
+                } else {
+                    color = "#EF0D0D";
+                }
+
+                L.circle(
+                    [regionData[i].label_location.latitude, regionData[i].label_location.longitude], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.5,
+                    radius: 1500,
+                }
+                ).addTo(map);
+
+                L.marker(
+                    [regionData[i].label_location.latitude, regionData[i].label_location.longitude], {
+                    icon: L.divIcon({
+                        className: "psiIndex",
+                        html: psiIndex[regionData[i].name],
+                    }),
+                }
+                ).addTo(map);
+            }
+
+
+
+
+        })
+
+
+
+
+
+</script>
+
+</html>
